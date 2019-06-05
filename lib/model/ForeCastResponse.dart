@@ -1,21 +1,37 @@
-import 'ForeCastForecastday.dart';
+import 'ForeCastEntity.dart';
+import 'WeatherCurrent.dart';
+import 'WeatherLocation.dart';
 
-class ForeCastEntity {
-	List<ForeCastForecastday> forecastday;
+class ForeCastResponse {
+  WeatherCurrent current;
+  WeatherLocation location;
+  ForeCastEntity forecast;
 
-	ForeCastEntity({this.forecastday});
+  ForeCastResponse({this.current, this.location, this.forecast});
 
-	ForeCastEntity.fromJson(Map<String, dynamic> json) {
-		if (json['forecastday'] != null) {
-			forecastday = new List<ForeCastForecastday>();(json['forecastday'] as List).forEach((v) { forecastday.add(new ForeCastForecastday.fromJson(v)); });
-		}
-	}
+  ForeCastResponse.fromJson(Map<String, dynamic> json) {
+    current = json['current'] != null
+        ? new WeatherCurrent.fromJson(json['current'])
+        : null;
+    location = json['location'] != null
+        ? new WeatherLocation.fromJson(json['location'])
+        : null;
+    forecast = json['forecast'] != null
+        ? new ForeCastEntity.fromJson(json['forecast'])
+        : null;
+  }
 
-	Map<String, dynamic> toJson() {
-		final Map<String, dynamic> data = new Map<String, dynamic>();
-		if (this.forecastday != null) {
-      data['forecastday'] =  this.forecastday.map((v) => v.toJson()).toList();
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    if (this.current != null) {
+      data['current'] = this.current.toJson();
     }
-		return data;
-	}
+    if (this.location != null) {
+      data['location'] = this.location.toJson();
+    }
+    if (this.forecast != null) {
+      data['forecast'] = this.forecast.toJson();
+    }
+    return data;
+  }
 }

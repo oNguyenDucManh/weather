@@ -8,10 +8,10 @@ class ForeCastForecastdayDay {
   double maxtempC;
   double maxtempF;
   double mintempC;
-  int avgvisMiles;
+  double avgvisMiles;
   double mintempF;
   double totalprecipIn;
-  int avghumidity;
+  double avghumidity;
   WeatherCondition condition;
   double maxwindKph;
   double maxwindMph;

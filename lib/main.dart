@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'config/API.dart';
-import 'model/WeatherResponse.dart';
+import 'model/ForeCastForecastday.dart';
+import 'model/ForeCastResponse.dart';
 import 'package:intl/intl.dart';
+import 'config/IconWeather.dart';
+import 'package:fcharts/fcharts.dart';
+import 'demoChart.dart';
 
 void main() => runApp(MyApp());
 
@@ -29,12 +33,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<WeatherEntity> weather;
+  Future<ForeCastResponse> weather;
+  final xAxis = new ChartAxis<String>();
 
   @override
   void initState() {
     super.initState();
-    weather = API.fetchWeather("ha noi");
+    weather = API.fetchForeCast("ha noi", 7);
   }
 
   @override
@@ -63,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Padding(
               padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
               child: Container(
-                child: FutureBuilder<WeatherEntity>(
+                child: FutureBuilder<ForeCastResponse>(
                   future: weather,
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
@@ -94,20 +99,20 @@ class _MyHomePageState extends State<MyHomePage> {
                                             snapshot.data.location.name,
                                             style: TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 20,
+                                                fontSize: 24,
                                                 fontWeight: FontWeight.bold),
                                           ),
                                           Text(
                                               _getNameDayOfWeek(
-                                                      DateTime.now().weekday) +
+                                                      DateTime.now().weekday,
+                                                      false) +
                                                   " " +
-                                                  _formatCurrentTime(
-                                                      DateTime.now()
-                                                          .millisecondsSinceEpoch),
+                                                  _formatCurrentTime(DateTime
+                                                          .now()
+                                                      .millisecondsSinceEpoch),
                                               style: TextStyle(
                                                   color: Colors.white,
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold)),
+                                                  fontSize: 14)),
                                         ],
                                       ))
                                 ],
@@ -122,16 +127,16 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             )),
                         Container(
+                            alignment: Alignment.center,
                             margin: EdgeInsets.only(top: 180),
-                            child: Column(children: <Widget>[
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: <Widget>[
-                                  Image.network(
-                                    "https:${snapshot.data.current.condition.icon}",
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.fill,
+                                  Image.asset(
+                                    IconWeather.getIconWeather(
+                                        snapshot.data.current.condition),
+                                    width: 124,
+                                    height: 124,
                                   ),
                                   Text(
                                     snapshot.data.current.tempC
@@ -141,22 +146,77 @@ class _MyHomePageState extends State<MyHomePage> {
                                     style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 80,
-                                        fontWeight: FontWeight.normal),
+                                        fontWeight: FontWeight.w300),
                                   ),
                                   Text(
-                                    "\nĐã cập nhật ${_formatDateFromTimeStamp(snapshot.data.current.lastUpdatedEpoch)}",
+                                    "${snapshot.data.current.condition.text}",
                                     style: TextStyle(
-                                        color: Colors.white, fontSize: 14),
+                                        color: Colors.white, fontSize: 18),
                                   )
+                                ])),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Container(
+                              height: 150,
+                              margin: EdgeInsets.only(bottom: 24),
+//                            child: Sparkline(
+//                                data: _getDataWeather(
+//                                    snapshot.data.forecast.forecastday),
+//                                lineColor: Colors.white,
+//                                pointsMode: PointsMode.all,
+//                                pointSize: 8.0,
+//                                pointColor: Colors.white, sharpCorners: false,),
+                              child: new LineChart(
+                                chartPadding: new EdgeInsets.fromLTRB(
+                                    60.0, 20.0, 30.0, 30.0),
+                                lines: [
+                                  new Line<ForeCastForecastday, String, double>(
+                                    data: snapshot.data.forecast.forecastday,
+                                    xFn: (forecastday) =>
+                                        _formatDateFromTimeStamp(
+                                            forecastday.dateEpoch),
+                                    yFn: (forecastday) =>
+                                        forecastday.day.avgtempC,
+                                    xAxis: new ChartAxis<String>(
+                                      paint: const PaintOptions.stroke(
+                                          color: Colors.white),
+                                      tickLabelerStyle: new TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    yAxis: new ChartAxis(
+                                      span: new DoubleSpan(
+                                          _getMinWeather(snapshot
+                                                  .data.forecast.forecastday) -
+                                              1,
+                                          _getMaxWeather(snapshot
+                                                  .data.forecast.forecastday) +
+                                              1),
+                                      opposite: false,
+                                      tickGenerator:
+                                          IntervalTickGenerator.byN(2),
+                                      paint: const PaintOptions.stroke(
+                                          color: Colors.white),
+                                      tickLabelerStyle: new TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    marker: const MarkerOptions(
+                                      paint: const PaintOptions.fill(
+                                          color: Colors.white),
+                                      shape: MarkerShapes.circle,
+                                    ),
+                                    stroke: const PaintOptions.stroke(
+                                        color: Colors.white),
+//                                    legend: new LegendItem(
+//                                      paint: const PaintOptions.fill(
+//                                          color: Colors.white),
+//                                      text: 'Size',
+//                                    ),
+                                  ),
                                 ],
-                              ),
-                              Center(
-                                  child: Text(
-                                "${snapshot.data.current.condition.text}",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 14),
                               )),
-                            ]))
+                        )
                       ]);
                     } else if (snapshot.hasError) {
                       return Text("${snapshot.error}");
@@ -169,32 +229,54 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String _formatDateFromTimeStamp(int lastUpdatedEpoch) {
-    return DateFormat('dd/MM/yyyy HH:mm')
-        .format(DateTime.fromMillisecondsSinceEpoch(lastUpdatedEpoch * 1000));
+    return _getNameDayOfWeek(
+        DateTime.fromMillisecondsSinceEpoch(lastUpdatedEpoch * 1000).weekday,
+        true);
   }
+
   String _formatCurrentTime(int time) {
     return DateFormat('dd/MM/yyyy')
         .format(DateTime.fromMillisecondsSinceEpoch(time));
   }
 
-  String _getNameDayOfWeek(int day) {
+  String _getNameDayOfWeek(int day, bool isShort) {
     switch (day) {
       case 1:
-        return "Thứ 2";
+        return isShort ? "T2" : "Thứ 2";
       case 2:
-        return "Thứ 3";
+        return isShort ? "T3" : "Thứ 3";
       case 3:
-        return "Thứ 4";
+        return isShort ? "T4" : "Thứ 4";
       case 4:
-        return "Thứ 5";
+        return isShort ? "T5" : "Thứ 5";
       case 5:
-        return "Thứ 6";
+        return isShort ? "T6" : "Thứ 6";
       case 6:
-        return "Thứ 7";
+        return isShort ? "T7" : "Thứ 7";
       case 7:
-        return "Chủ nhật";
+        return isShort ? "CN" : "Chủ nhật";
       default:
         return "Unknow";
     }
+  }
+
+  double _getMinWeather(List<ForeCastForecastday> forecastday) {
+    double min = forecastday[0].day.avgtempC;
+    for (int i = 0; i < forecastday.length; i++) {
+      if (min > forecastday[i].day.avgtempC) {
+        min = forecastday[i].day.avgtempC;
+      }
+    }
+    return min;
+  }
+
+  double _getMaxWeather(List<ForeCastForecastday> forecastday) {
+    double max = forecastday[0].day.avgtempC;
+    for (int i = 0; i < forecastday.length; i++) {
+      if (max < forecastday[i].day.avgtempC) {
+        max = forecastday[i].day.avgtempC;
+      }
+    }
+    return max;
   }
 }
